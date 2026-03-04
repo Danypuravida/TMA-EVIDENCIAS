@@ -46,7 +46,7 @@
       /* ===== Botões rápidos de Problema ===== */
       .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
       #problemChips .chip{
-        width:auto;               /* importante: não virar botão gigante */
+        width:auto;
         border:1px solid var(--border);
         background:#fff;
         color:#111827;
@@ -170,7 +170,7 @@
 
         <label>Foto/print *</label>
         <input id="file" type="file" accept="image/*" />
-        <small>Dica: prints são leves. Foto do celular pode ficar grande e o envio pode falhar por limite do servidor.</small>
+        <small>Dica: prints são leves. Fotos podem ser grandes; o sistema reduz automaticamente antes de enviar.</small>
 
         <div class="sticky-actions">
           <button id="sendBtn" onclick="send()">Enviar</button>
@@ -197,16 +197,49 @@
 
       function onlyDigits(s) { return (s || "").replace(/\D+/g, ""); }
 
-      function toBase64(file) {
+      // ===== Imagem -> DataURL =====
+      async function fileToDataURL(file){
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = (reader.result || "").toString().split(",")[1];
-            resolve(base64);
-          };
+          reader.onload = () => resolve(String(reader.result));
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
+      }
+
+      // ===== Compressão (resolve falha no celular por foto grande) =====
+      async function compressImageToJpegBase64(file, maxDim = 1600, quality = 0.75) {
+        const dataUrl = await fileToDataURL(file);
+
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = dataUrl;
+        });
+
+        let { width, height } = img;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Sempre JPEG (leve e compatível)
+        const outDataUrl = canvas.toDataURL("image/jpeg", quality);
+        const base64Data = outDataUrl.split(",")[1];
+
+        return {
+          base64Data,
+          mimeType: "image/jpeg",
+          fileName: (file.name || "evidencia").replace(/\.[^.]+$/, "") + ".jpg",
+          approxBytes: Math.floor(base64Data.length * 0.75)
+        };
       }
 
       // ===== Chips sincronizados com dropdown =====
@@ -217,7 +250,6 @@
       function selectProblem(value){
         document.getElementById("problema").value = value;
         toggleOutro();
-
         clearChipSelection();
         const btn = document.querySelector(`#problemChips .chip[data-value="${CSS.escape(value)}"]`);
         if (btn) btn.classList.add("selected");
@@ -266,7 +298,13 @@
         btn.textContent = "Enviando...";
 
         try {
-          const base64Data = await toBase64(file);
+          // 1) Comprime/normaliza para JPEG antes de enviar (fundamental no celular)
+          let comp = await compressImageToJpegBase64(file, 1600, 0.75);
+
+          // 2) Se ainda estiver muito grande, reduz mais (fallback)
+          if (comp.approxBytes > 4 * 1024 * 1024) {
+            comp = await compressImageToJpegBase64(file, 1280, 0.65);
+          }
 
           const payload = {
             cpf,
@@ -278,9 +316,9 @@
             resolucao,
             atendente,
             observacoes,
-            fileName: file.name,
-            mimeType: file.type,
-            base64Data
+            fileName: comp.fileName,
+            mimeType: comp.mimeType,
+            base64Data: comp.base64Data
           };
 
           // Truque para reduzir chance de preflight/CORS: text/plain
@@ -296,7 +334,7 @@
           if (data && data.ok === false) {
             setStatus("Erro ao enviar: " + data.message, false);
           } else {
-            setStatus((data && data.message) ? data.message : "Enviado ✅ (confira na planilha)", true);
+            setStatus((data && data.message) ? data.message : "Enviado ✅", true);
           }
 
           btn.disabled = false;
@@ -318,8 +356,7 @@
           window.scrollTo({ top: 0, behavior: "smooth" });
 
         } catch (e) {
-          // Se estourar limite do Apps Script, normalmente cai aqui
-          setStatus("Falhou ao enviar. Se for foto muito pesada, tente print ou reduza a imagem.", false);
+          setStatus("Falhou ao enviar: " + (e && e.message ? e.message : String(e)), false);
           btn.disabled = false;
           btn.textContent = "Enviar";
         }
