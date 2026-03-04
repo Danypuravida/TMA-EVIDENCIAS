@@ -19,28 +19,37 @@
       @media (max-width:560px){.wrap{padding:0}.card{max-width:none;border-left:0;border-right:0;border-radius:0;padding:14px}}
       label{display:block;margin-top:12px;font-weight:900;font-size:14px;}
       small{color:var(--muted);display:block;margin-top:6px;font-size:12.5px;line-height:1.3;}
-      select,input,textarea,button{width:100%;padding:16px;margin-top:6px;box-sizing:border-box;font-size:16px;border-radius:12px;border:1px solid var(--border);background:#fff;}
+      select,input,textarea{width:100%;padding:16px;margin-top:6px;box-sizing:border-box;font-size:16px;border-radius:12px;border:1px solid var(--border);background:#fff;}
       textarea{min-height:96px;resize:vertical;}
       .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
       @media (max-width:560px){.row{grid-template-columns:1fr}}
-      button{cursor:pointer;font-weight:900;border:0;margin-top:14px;padding:18px;border-radius:14px;background:#111827;color:#fff;}
-      button:disabled{opacity:.7;cursor:not-allowed;}
       .status{margin-top:12px;padding:12px;border-radius:12px;font-size:14px;line-height:1.35;display:none;}
       .status.ok{background:var(--okbg);border:1px solid var(--okbd);display:block;}
       .status.err{background:var(--errbg);border:1px solid var(--errbd);display:block;}
       .sticky-actions{position:sticky;bottom:0;background:linear-gradient(to top, rgba(246,247,249,1), rgba(246,247,249,0));padding-top:10px;margin-top:8px;}
 
-      /* ===== Botões rápidos de Problema (modo operação) ===== */
-      .chips{
-        display:flex;
-        flex-wrap:wrap;
-        gap:10px;
-        margin-top:8px;
+      /* Botão principal (somente Enviar) */
+      #sendBtn{
+        width:100%;
+        cursor:pointer;
+        font-weight:900;
+        border:0;
+        margin-top:14px;
+        padding:18px;
+        border-radius:14px;
+        background:#111827;
+        color:#fff;
+        font-size:16px;
       }
-      .chip{
-        appearance:none;
+      #sendBtn:disabled{opacity:.7;cursor:not-allowed;}
+
+      /* ===== Botões rápidos de Problema ===== */
+      .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+      #problemChips .chip{
+        width:auto;               /* importante: não virar botão gigante */
         border:1px solid var(--border);
         background:#fff;
+        color:#111827;
         padding:12px 14px;
         border-radius:999px;
         font-weight:900;
@@ -49,57 +58,17 @@
         cursor:pointer;
         user-select:none;
       }
-      .chip:active{transform:scale(0.98);}
-      .chip.selected{
-        background:#111827;
-        color:#fff;
-        border-color:#111827;
-      }
-      .chip.secondary{
-        background:#f3f4f6;
-      }
-      @media (max-width:560px){
-        .chip{padding:14px 14px; font-size:14px;}
-      }
-      <style>
-  /* ... mantenha o resto do seu CSS ... */
-
-  /* Botão principal (somente o Enviar) */
-  #sendBtn{
-    cursor:pointer;
-    font-weight:900;
-    border:0;
-    margin-top:14px;
-    padding:18px;
-    border-radius:14px;
-    background:#111827;
-    color:#fff;
-  }
-  #sendBtn:disabled{opacity:.7; cursor:not-allowed;}
-
-  /* Chips (botões de problema) */
-  #problemChips .chip{
-    border:1px solid #e5e7eb;
-    background:#fff;
-    color:#111827;
-    padding:12px 14px;
-    border-radius:999px;
-    font-weight:900;
-    font-size:14px;
-    cursor:pointer;
-  }
-  #problemChips .chip.selected{
-    background:#111827;
-    color:#fff;
-    border-color:#111827;
-  }
-</style>
+      #problemChips .chip:active{transform:scale(0.98);}
+      #problemChips .chip.selected{background:#111827;color:#fff;border-color:#111827;}
+      #problemChips .chip.secondary{background:#f3f4f6;}
+      @media (max-width:560px){#problemChips .chip{padding:14px 14px;font-size:14px;}}
+    </style>
   </head>
 
   <body>
     <div class="appbar">
       <div class="title">Evidências TMA</div>
-      <div class="subtitle">Toques rápidos + evidência. Vai para planilha + Drive.</div>
+      <div class="subtitle">Informações de atendimentos.</div>
     </div>
 
     <div class="wrap">
@@ -151,15 +120,14 @@
           <option>Cortesia</option>
         </select>
 
-        <!-- ===== Problema: botões rápidos + dropdown (fallback) ===== -->
         <label>Problema *</label>
         <small>Preferencialmente use os botões (mais rápido). Se precisar, use o dropdown.</small>
 
         <div class="chips" id="problemChips">
-          <button type="button" class="chip" data-value="Facial negada-não localizado na contingência">Facial negada</button>
+          <button type="button" class="chip" data-value="Facial negada-não localizado na contingência">Facial negada - Não localizado</button>
           <button type="button" class="chip" data-value="Resgate de link">Resgate de link</button>
           <button type="button" class="chip" data-value="Ingresso com cadeado-transferência não habilitada">Cadeado</button>
-          <button type="button" class="chip" data-value="Criança sem cadastro">Criança</button>
+          <button type="button" class="chip" data-value="Criança sem cadastro">Criança sem cadastro</button>
           <button type="button" class="chip" data-value="Troca de setor">Troca de setor</button>
           <button type="button" class="chip" data-value="Orientações">Orientações</button>
           <button type="button" class="chip secondary" data-value="Outro">Outro</button>
@@ -202,7 +170,7 @@
 
         <label>Foto/print *</label>
         <input id="file" type="file" accept="image/*" />
-        <small>Dica: prefira print. Foto do celular do torcedor pode reprovar por qualidade.</small>
+        <small>Dica: prints são leves. Foto do celular pode ficar grande e o envio pode falhar por limite do servidor.</small>
 
         <div class="sticky-actions">
           <button id="sendBtn" onclick="send()">Enviar</button>
@@ -213,6 +181,9 @@
     </div>
 
     <script>
+      // URL do seu Apps Script /exec (com doPost habilitado)
+      const API_URL = "https://script.google.com/macros/s/AKfycbxW0Dh4Hy4JdPL6hvh6CiTFdaWWbPFtdHTEnKjy8t5TTepAjOYXlya4PUrimSPu6hc5/exec";
+
       function setStatus(msg, ok) {
         const el = document.getElementById("status");
         el.className = "status " + (ok ? "ok" : "err");
@@ -238,31 +209,26 @@
         });
       }
 
-      // ======== Botões rápidos: sincroniza com o dropdown ========
+      // ===== Chips sincronizados com dropdown =====
       function clearChipSelection(){
         document.querySelectorAll("#problemChips .chip").forEach(b => b.classList.remove("selected"));
       }
 
       function selectProblem(value){
-        // seta dropdown
         document.getElementById("problema").value = value;
         toggleOutro();
 
-        // marca chip correspondente
         clearChipSelection();
         const btn = document.querySelector(`#problemChips .chip[data-value="${CSS.escape(value)}"]`);
         if (btn) btn.classList.add("selected");
       }
 
-      // Clique nos chips
       document.addEventListener("click", (e) => {
         const btn = e.target.closest("#problemChips .chip");
         if (!btn) return;
-        const value = btn.getAttribute("data-value");
-        selectProblem(value);
+        selectProblem(btn.getAttribute("data-value"));
       });
 
-      // Se mudar o dropdown manualmente, marca chip também
       document.getElementById("problema").addEventListener("change", (e) => {
         const value = e.target.value;
         clearChipSelection();
@@ -272,8 +238,7 @@
       });
 
       async function send() {
-        const cpfRaw = document.getElementById("cpf").value;
-        const cpf = onlyDigits(cpfRaw);
+        const cpf = onlyDigits(document.getElementById("cpf").value);
         const setorAtendimento = document.getElementById("setorAtendimento").value;
         const socio = document.getElementById("socio").value;
         const tipoIngresso = document.getElementById("tipoIngresso").value;
@@ -297,61 +262,64 @@
 
         const file = fileInput.files[0];
 
-        if (file.size > 12 * 1024 * 1024) {
-          setStatus("Arquivo muito grande (>12MB). Envie um print ou reduza a foto.", false);
-          return;
-        }
-
         btn.disabled = true;
         btn.textContent = "Enviando...";
 
         try {
           const base64Data = await toBase64(file);
 
-          google.script.run
-            .withSuccessHandler((res) => {
-              setStatus(res.message, true);
-              btn.disabled = false;
-              btn.textContent = "Enviar";
+          const payload = {
+            cpf,
+            setorAtendimento,
+            socio,
+            tipoIngresso,
+            problema,
+            problemaOutroDesc,
+            resolucao,
+            atendente,
+            observacoes,
+            fileName: file.name,
+            mimeType: file.type,
+            base64Data
+          };
 
-              // reset
-              document.getElementById("cpf").value = "";
-              document.getElementById("socio").value = "";
-              document.getElementById("setorAtendimento").value = "";
-              document.getElementById("tipoIngresso").value = "";
-              document.getElementById("problema").value = "";
-              document.getElementById("problemaOutroDesc").value = "";
-              document.getElementById("resolucao").value = "";
-              document.getElementById("atendente").value = "";
-              document.getElementById("observacoes").value = "";
-              fileInput.value = "";
-              toggleOutro();
-              clearChipSelection();
+          // Truque para reduzir chance de preflight/CORS: text/plain
+          const resp = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
 
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            })
-            .withFailureHandler((err) => {
-              setStatus("Erro ao enviar: " + (err && err.message ? err.message : err), false);
-              btn.disabled = false;
-              btn.textContent = "Enviar";
-            })
-            .uploadEvidence({
-              cpf,
-              setorAtendimento,
-              socio,
-              tipoIngresso,
-              problema,
-              problemaOutroDesc,
-              resolucao,
-              atendente,
-              observacoes,
-              fileName: file.name,
-              mimeType: file.type,
-              base64Data
-            });
+          let data = null;
+          try { data = await resp.json(); } catch(_) {}
+
+          if (data && data.ok === false) {
+            setStatus("Erro ao enviar: " + data.message, false);
+          } else {
+            setStatus((data && data.message) ? data.message : "Enviado ✅ (confira na planilha)", true);
+          }
+
+          btn.disabled = false;
+          btn.textContent = "Enviar";
+
+          // reset
+          document.getElementById("cpf").value = "";
+          document.getElementById("socio").value = "";
+          document.getElementById("setorAtendimento").value = "";
+          document.getElementById("tipoIngresso").value = "";
+          document.getElementById("problema").value = "";
+          document.getElementById("problemaOutroDesc").value = "";
+          document.getElementById("resolucao").value = "";
+          document.getElementById("atendente").value = "";
+          document.getElementById("observacoes").value = "";
+          fileInput.value = "";
+          toggleOutro();
+          clearChipSelection();
+          window.scrollTo({ top: 0, behavior: "smooth" });
 
         } catch (e) {
-          setStatus("Erro: " + e.message, false);
+          // Se estourar limite do Apps Script, normalmente cai aqui
+          setStatus("Falhou ao enviar. Se for foto muito pesada, tente print ou reduza a imagem.", false);
           btn.disabled = false;
           btn.textContent = "Enviar";
         }
