@@ -152,7 +152,7 @@
         <div class="row">
           <div>
             <label>Resolução *</label>
-            <select id="resolucao">
+            <select id="resolucao" onchange="toggleEvidencia()">
               <option value="">Selecione...</option>
               <option>Master branco</option>
               <option>Master preto</option>
@@ -168,9 +168,11 @@
         <label>Observações</label>
         <textarea id="observacoes" placeholder="Opcional"></textarea>
 
-        <label>Foto/print *</label>
-        <input id="file" type="file" accept="image/*" />
-        <small>Dica: prints são leves. Fotos podem ser grandes; o sistema reduz automaticamente antes de enviar.</small>
+       <label>Foto/print</label>
+<div id="evidenciaBox" style="display:none;">
+  <input id="file" type="file" accept="image/*" />
+  <small>Dica: prints são leves. Fotos podem ser grandes; o sistema reduz automaticamente antes de enviar.</small>
+</div>
 
         <div class="sticky-actions">
           <button id="sendBtn" onclick="send()">Enviar</button>
@@ -290,36 +292,58 @@
         if (problema === "Outro" && !problemaOutroDesc) { setStatus("Descreva o problema (Outro).", false); return; }
         if (!resolucao) { setStatus("Selecione a resolução.", false); return; }
         if (!atendente) { setStatus("Preencha o atendente.", false); return; }
-        if (!fileInput.files || fileInput.files.length === 0) { setStatus("Selecione a foto/print.", false); return; }
+        const precisaEvidencia = (resolucao === "Master branco" || resolucao === "Master preto");
 
-        const file = fileInput.files[0];
+if (precisaEvidencia && (!fileInput.files || fileInput.files.length === 0)) {
+  setStatus("Selecione a foto/print.", false);
+  return;
+}
 
-        btn.disabled = true;
-        btn.textContent = "Enviando...";
+btn.disabled = true;
+btn.textContent = "Enviando...";
 
-        try {
-          // 1) Comprime/normaliza para JPEG antes de enviar (fundamental no celular)
-          let comp = await compressImageToJpegBase64(file, 1600, 0.75);
+try {
 
-          // 2) Se ainda estiver muito grande, reduz mais (fallback)
-          if (comp.approxBytes > 4 * 1024 * 1024) {
-            comp = await compressImageToJpegBase64(file, 1280, 0.65);
-          }
+  const precisaEvidencia = (resolucao === "Master branco" || resolucao === "Master preto");
 
-          const payload = {
-            cpf,
-            setorAtendimento,
-            socio,
-            tipoIngresso,
-            problema,
-            problemaOutroDesc,
-            resolucao,
-            atendente,
-            observacoes,
-            fileName: comp.fileName,
-            mimeType: comp.mimeType,
-            base64Data: comp.base64Data
-          };
+  let payload = {
+    cpf,
+    setorAtendimento,
+    socio,
+    tipoIngresso,
+    problema,
+    problemaOutroDesc,
+    resolucao,
+    atendente,
+    observacoes
+  };
+
+  if (precisaEvidencia && fileInput.files.length > 0) {
+
+    const file = fileInput.files[0];
+
+    let comp = await compressImageToJpegBase64(file, 1600, 0.75);
+
+    if (comp.approxBytes > 4 * 1024 * 1024) {
+      comp = await compressImageToJpegBase64(file, 1280, 0.65);
+    }
+
+    payload.fileName = comp.fileName;
+    payload.mimeType = comp.mimeType;
+    payload.base64Data = comp.base64Data;
+  }
+
+          function toggleEvidencia() {
+  const resolucao = document.getElementById("resolucao").value;
+  const box = document.getElementById("evidenciaBox");
+
+  if (resolucao === "Master branco" || resolucao === "Master preto") {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    document.getElementById("file").value = "";
+  }
+}
 
           // Truque para reduzir chance de preflight/CORS: text/plain
           const resp = await fetch(API_URL, {
